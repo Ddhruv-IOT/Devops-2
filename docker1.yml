@@ -1,0 +1,55 @@
+- name: "Configuring HTTPD on Docker"
+  hosts: all
+  tasks:
+    - name: "Yum configuration of Docker"
+      yum_repository:
+        name: docker
+        description: "docker repository"
+        baseurl: https://download.docker.com/linux/centos/9/x86_64/stable/
+        gpgcheck: no
+
+
+    - name: "Installing Docker"
+      command: "yum install docker-ce --nobest -y"
+
+
+    - name: "Docker service start and enable"
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+
+    - name: "Install Python SDK for Docker"
+      pip:
+        name: "docker"
+        state: present
+
+
+    - name: "Pulling HTTPD image from Docker Hub"
+      docker_image:
+        name: httpd
+        source: pull
+        state: present
+
+
+    - name: "Creation of a directory"
+      file:
+        path: "/var/www/html"
+        state: directory
+
+
+    - name: "Copying HTML file"
+      copy:
+        src: "index.html"
+        dest: "/var/www/html/index.html"
+
+
+    - name: "Launching Docker container"
+      docker_container:
+        name: webserver
+        image: httpd
+        state: started
+        ports: "8081:80"
+        volumes: /var/www/html/index.html:/usr/local/apache2/htdocs/index.html
+        detach: true
